@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ma Bibliothèque 📚
 
-## Getting Started
+Bibliothèque personnelle **en ligne** : visualise les livres que tu possèdes et ceux que tu souhaites, explore les ouvrages de référence par domaine, suis les tendances, garde un œil sur les prix, et découvre **ce qui est consultable gratuitement** — et dans quels formats (EPUB, Kindle, PDF, audio, lecture en ligne…).
 
-First, run the development server:
+Le projet part d'une maquette de mur de livres et d'un export de liste de souhaits Amazon, transformés en application web réelle et déployable.
+
+## Fonctionnalités
+
+- **3 vues de bibliothèque** — Mur (vignettes), Étagères (regroupées par domaine, façon bibliothèque physique), Liste (détaillée). Recherche plein texte, filtres par statut et par domaine.
+- **Souhaits & possession** — chaque livre a un statut : *À acheter*, *En cours*, *Lu*, *Possédé*. Les souhaits apparaissent grisés sur le mur. Note personnelle sur 5 étoiles.
+- **Références par domaine** (page *Tendances*) — les ouvrages incontournables classés par champ de connaissance (Philosophie, Développement personnel, Business & Finance, Science, Histoire, Psychologie, Fiction, SF, Spiritualité, Informatique…).
+- **Tendances du moment** — sélection d'incontournables à lire en priorité.
+- **Suivi des prix** (page *Suivi des prix*) — historique de prix par livre (sparkline), plus bas observé, meilleures baisses, et **alertes de prix** personnalisables (prix cible).
+- **Consultation gratuite & formats** — pour chaque livre, l'app interroge en direct des sources ouvertes et affiche les versions libres disponibles :
+  - **Project Gutenberg** (via Gutendex) — EPUB, Kindle/MOBI, HTML, TXT pour le domaine public.
+  - **Open Library / Internet Archive** — lecture en ligne ou emprunt gratuit.
+  - **LibriVox** — livres audio libres.
+  - Sinon : liens d'achat (Amazon, Fnac), Audible et résumé YouTube.
+
+## Stack
+
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
+- **Tailwind CSS 4** (styles majoritairement inline pour l'esthétique « bibliothèque »)
+- Couvertures : **Open Library Covers API** (par ISBN)
+- Persistance locale : **localStorage** (statuts, notes, alertes) — aucune base de données, aucun secret. Une synchro multi-appareils (Supabase) est possible en évolution.
+- Enrichissement dispo gratuite : route serveur `GET /api/availability` (Gutendex, Open Library, LibriVox), mise en cache 24 h.
+
+## Démarrer en local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Build de production :
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build && npm run start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Déploiement
 
-## Learn More
+Prêt pour **Vercel** (repo public, zéro variable d'environnement requise) :
 
-To learn more about Next.js, take a look at the following resources:
+1. Importer le dépôt sur [vercel.com/new](https://vercel.com/new).
+2. Déployer — aucune configuration nécessaire.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+La route `/api/availability` s'exécute côté serveur (fonction Vercel) et met en cache les réponses des API publiques.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Données
 
-## Deploy on Vercel
+Le catalogue de référence (`src/data/books.ts`) est généré par `scripts/gen_books.py` : ~38 titres répartis en 11 domaines, avec ISBN réels (pour les couvertures et la recherche de disponibilité) et un historique de prix déterministe.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Prix réels (évolution)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+L'historique de prix est initialisé au catalogue. Pour rafraîchir des prix réels et déclencher les alertes, brancher un job planifié (Vercel Cron / GitHub Action) qui met à jour `priceHistory` — l'architecture est prête pour ça.
+
+## Origine
+
+- Maquette d'origine : mur/étagères de livres (runtime « x-dc »).
+- Liste de souhaits Amazon (export *printview*) → concept d'import de wishlist et livre *A Concise Encyclopedia of the Original Literature of Esperanto* inclus dans le catalogue.
+
+---
+
+*Bibliothèque personnelle — open source.*
