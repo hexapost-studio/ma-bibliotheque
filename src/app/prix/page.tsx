@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Book } from "@/data/books";
-import { useLibrary, usePriceAlerts, setPriceAlert } from "@/lib/store";
+import { useLibrary, usePriceAlerts, setPriceAlert, bookKey } from "@/lib/store";
 import { eur, ACCENT } from "@/lib/meta";
 import BookSpine from "@/components/BookSpine";
 import BookModal from "@/components/BookModal";
@@ -55,7 +55,8 @@ export default function PrixPage() {
 
       <div style={{ background: "#f7f0e2", border: "1px solid #e3d6bf", borderRadius: 14, overflow: "hidden" }}>
         {rows.map(({ b, lowest, drop, dropPct }, i) => {
-          const alert = alerts[b.isbn];
+          const k = bookKey(b);
+          const alert = alerts[k];
           const hit = alert != null && b.price <= alert;
           return (
             <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 16, padding: "12px 16px", borderTop: i ? "1px solid #eaddc6" : "none" }}>
@@ -84,11 +85,14 @@ export default function PrixPage() {
                 <label style={{ fontSize: 11, color: "#a4917a", display: "block", marginBottom: 2 }}>Alerte prix</label>
                 <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
                   <input
-                    type="number"
-                    step="0.5"
+                    type="text"
+                    inputMode="decimal"
                     defaultValue={alert ?? ""}
                     placeholder="—"
-                    onBlur={(e) => setPriceAlert(b.isbn, e.target.value ? parseFloat(e.target.value) : null)}
+                    onBlur={(e) => {
+                      const v = parseFloat(e.target.value.replace(",", "."));
+                      setPriceAlert(k, e.target.value && !Number.isNaN(v) ? v : null);
+                    }}
                     style={{ width: 60, padding: "4px 6px", border: `1px solid ${hit ? "#5a7052" : "#d8ccb6"}`, borderRadius: 6, fontSize: 13, textAlign: "right", background: hit ? "#e8f0e4" : "#fff" }}
                   />
                   <span style={{ fontSize: 12, color: "#8a7a68" }}>€</span>

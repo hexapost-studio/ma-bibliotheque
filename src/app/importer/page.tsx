@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { parseWishlist, type ImportItem } from "@/lib/import";
-import { addBooksBatch, type NewBook } from "@/lib/store";
+import { addBooksBatch, exportData, importData, type NewBook } from "@/lib/store";
 import { DOMAINS } from "@/data/books";
 import type { LookupResult } from "@/app/api/lookup/route";
 import { ACCENT } from "@/lib/meta";
@@ -47,6 +47,28 @@ export default function ImporterPage() {
     setAdded(n);
     setRows([]);
     setText("");
+  }
+
+  const [restored, setRestored] = useState<"ok" | "err" | null>(null);
+  function doExport() {
+    const blob = new Blob([exportData()], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ma-bibliotheque-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  function doImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const ok = importData(String(reader.result), false);
+      setRestored(ok ? "ok" : "err");
+    };
+    reader.readAsText(file);
+    e.target.value = "";
   }
 
   const [mTitle, setMTitle] = useState("");
@@ -135,6 +157,22 @@ export default function ImporterPage() {
           <Field label="Prix (€)"><input type="number" step="0.5" value={mPrice} onChange={(e) => setMPrice(e.target.value)} style={{ ...inputStyle, width: 90 }} /></Field>
           <button type="submit" style={btn(true)}>Ajouter</button>
         </form>
+      </section>
+
+      {/* Sauvegarde */}
+      <section style={card}>
+        <h3 style={h3}>Sauvegarde de ma bibliothèque</h3>
+        <p style={{ fontSize: 13, color: "#8a7a68", margin: "0 0 12px" }}>
+          Tes données vivent uniquement dans ce navigateur. Exporte-les régulièrement pour ne rien perdre et les transférer sur un autre appareil.
+        </p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <button onClick={doExport} style={btn(true)}>⬇ Exporter (JSON)</button>
+          <label style={{ ...btn(true), background: "#5a7052", cursor: "pointer" }}>
+            ⬆ Restaurer une sauvegarde
+            <input type="file" accept="application/json,.json" onChange={doImport} style={{ display: "none" }} />
+          </label>
+          {restored && <span style={{ fontSize: 13, color: restored === "ok" ? "#5a7052" : "#a2503c", fontWeight: 600 }}>{restored === "ok" ? "✓ Sauvegarde restaurée." : "✗ Fichier invalide."}</span>}
+        </div>
       </section>
 
       {/* Aide */}

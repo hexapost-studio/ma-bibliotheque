@@ -10,7 +10,8 @@ Le projet part d'une maquette de mur de livres et d'un export de liste de souhai
 - **Souhaits & possession** — chaque livre a un statut : *À acheter*, *En cours*, *Lu*, *Possédé*. Les souhaits apparaissent grisés sur le mur. Note personnelle sur 5 étoiles.
 - **Références par domaine** (page *Tendances*) — les ouvrages incontournables classés par champ de connaissance (Philosophie, Développement personnel, Business & Finance, Science, Histoire, Psychologie, Fiction, SF, Spiritualité, Informatique…).
 - **Tendances du moment** — sélection d'incontournables à lire en priorité.
-- **Suivi des prix** (page *Suivi des prix*) — historique de prix par livre (sparkline), plus bas observé, meilleures baisses, et **alertes de prix** personnalisables (prix cible).
+- **Suivi des prix** (page *Suivi des prix*) — historique de prix par livre (sparkline), plus bas observé, meilleures baisses, et **alertes de prix** personnalisables (prix cible). Tu peux **relever un prix réel** depuis la fiche d'un livre (« Relever le prix du jour ») : l'historique se construit avec de vraies valeurs datées et déclenche tes alertes.
+- **Sauvegarde** (page *Importer*) — exporte toute ta bibliothèque en JSON et restaure-la sur un autre appareil (aucune donnée n'étant côté serveur, c'est ta sauvegarde).
 - **Consultation gratuite & formats** — pour chaque livre, l'app interroge en direct des sources ouvertes et affiche les versions libres disponibles :
   - **Project Gutenberg** (via Gutendex) — EPUB, Kindle/MOBI, HTML, TXT pour le domaine public.
   - **Open Library / Internet Archive** — lecture en ligne ou emprunt gratuit.
@@ -62,9 +63,11 @@ La route `/api/availability` s'exécute côté serveur (fonction Vercel) et met 
 
 Le catalogue de référence (`src/data/books.ts`) est généré par `scripts/gen_books.py` : ~38 titres répartis en 11 domaines, avec ISBN réels (pour les couvertures et la recherche de disponibilité) et un historique de prix déterministe.
 
-### Prix réels (évolution)
+### Prix réels
 
-L'historique de prix est initialisé au catalogue. Pour rafraîchir des prix réels et déclencher les alertes, brancher un job planifié (Vercel Cron / GitHub Action) qui met à jour `priceHistory` — l'architecture est prête pour ça.
+Deux niveaux :
+1. **Manuel (dispo)** — relève le prix constaté depuis la fiche d'un livre ; il est daté, stocké en local et alimente le graphe + les alertes.
+2. **Automatique (évolution)** — un rafraîchissement automatique nécessiterait un stockage serveur (les données sont aujourd'hui 100 % locales) et une source de prix ; il n'existe pas d'API de prix gratuite et fiable sans clé (Google Books est plafonné et la plupart des titres sont `NOT_FOR_SALE`). À brancher avec une base (Supabase) + un job planifié le jour où une synchro multi-appareils est ajoutée.
 
 ## Origine
 

@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { Book, Status } from "@/data/books";
 import { STATUS_META, STATUS_ORDER, ACCENT, eur, externalLinks } from "@/lib/meta";
-import { setRating, setStatus } from "@/lib/store";
+import { setRating, setStatus, logPrice } from "@/lib/store";
 import { useAvailability } from "@/lib/availability";
 import BookSpine from "./BookSpine";
 import Sparkline from "./Sparkline";
 
 export default function BookModal({ book, onClose }: { book: Book; onClose: () => void }) {
   const { data, loading } = useAvailability(book);
+  const [priceInput, setPriceInput] = useState("");
   const links = externalLinks(book.titleFr, book.titleEn, book.author);
   const lowest = Math.min(...(book.priceHistory.length ? book.priceHistory : [book.price]));
   const drop = book.priceHistory.length ? book.priceHistory[0] - book.price : 0;
@@ -75,18 +76,45 @@ export default function BookModal({ book, onClose }: { book: Book; onClose: () =
         </div>
 
         {/* Suivi de prix */}
-        {book.priceHistory.length > 1 && (
-          <section style={box}>
-            <div style={legend}>Suivi de prix</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <Sparkline data={book.priceHistory} width={160} height={40} />
-              <div style={{ fontSize: 13, color: "#6b5844" }}>
-                <div>Actuel : <b style={{ color: ACCENT }}>{eur(book.price)}</b></div>
-                <div>Plus bas observé : <b>{eur(lowest)}</b></div>
-              </div>
+        <section style={box}>
+          <div style={legend}>Suivi de prix</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            {book.priceHistory.length > 1 && <Sparkline data={book.priceHistory} width={160} height={40} />}
+            <div style={{ fontSize: 13, color: "#6b5844" }}>
+              <div>Actuel : <b style={{ color: ACCENT }}>{book.price ? eur(book.price) : "—"}</b></div>
+              {book.priceHistory.length > 0 && <div>Plus bas observé : <b>{eur(lowest)}</b></div>}
             </div>
-          </section>
-        )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+            <label style={{ fontSize: 12, color: "#8a7a68" }}>Relever le prix du jour&nbsp;:</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={priceInput}
+              onChange={(e) => setPriceInput(e.target.value)}
+              placeholder="ex. 9,90"
+              aria-label="Prix relevé aujourd'hui"
+              style={{ width: 90, padding: "6px 8px", border: "1px solid #d8ccb6", borderRadius: 8, fontSize: 13 }}
+            />
+            <span style={{ fontSize: 12, color: "#8a7a68" }}>€</span>
+            <button
+              onClick={() => {
+                const v = parseFloat(priceInput.replace(",", "."));
+                if (!Number.isNaN(v) && v > 0) {
+                  logPrice(book, v);
+                  setPriceInput("");
+                }
+              }}
+              disabled={!priceInput.trim()}
+              style={{ fontWeight: 700, fontSize: 13, padding: "6px 14px", borderRadius: 8, border: "none", cursor: priceInput.trim() ? "pointer" : "not-allowed", background: priceInput.trim() ? "#5a7052" : "#cbb89a", color: "#fff" }}
+            >
+              Enregistrer
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: "#a4917a", margin: "6px 0 0", fontStyle: "italic" }}>
+            Va voir le prix sur Amazon/Fnac ci-dessous, relève-le ici : ton historique se construit avec de vraies valeurs et déclenche tes alertes.
+          </p>
+        </section>
 
         {/* Note */}
         <section style={box}>
