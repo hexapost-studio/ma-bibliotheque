@@ -104,36 +104,55 @@ export function setPriceAlert(isbn: string, target: number | null) {
   persist();
 }
 
-export function addCustomBook(input: {
+const PALETTE = ["#c96b3f", "#3f5b52", "#2f4a6b", "#d8a13a", "#7a2f2f", "#4a4740", "#6b5a3f", "#8a5a6b", "#b5623c", "#2f5b4a", "#3a3550", "#9a6b2f"];
+const TEXTS = ["#fff5ea", "#eef5f0", "#eaf1f8", "#3a2c10", "#f8eaea", "#f2efe8", "#f7f0e2", "#f9edf1", "#fdf1e6", "#eaf5ef", "#eeecf6", "#fbf1df"];
+
+export interface NewBook {
   titleFr: string;
   titleEn?: string;
   author: string;
   isbn?: string;
-  domain: string;
+  domain?: string;
   price?: number;
-}) {
-  ensureLoaded();
-  const id = 100000 + state.custom.length + 1;
+}
+
+function buildCustom(input: NewBook, id: number): CustomBook {
   const price = input.price ?? 0;
-  const book: CustomBook = {
+  const i = id % PALETTE.length;
+  return {
     id,
     titleFr: input.titleFr,
     titleEn: input.titleEn || input.titleFr,
     author: input.author,
     isbn: input.isbn || "",
-    domain: input.domain,
+    domain: input.domain?.trim() || "Mes ajouts",
     price,
     priceHistory: price ? [price] : [],
     reference: false,
     publicDomain: false,
     status: "souhait",
     rating: 0,
-    color: "#6b5a3f",
-    text: "#f7f0e2",
+    color: PALETTE[i],
+    text: TEXTS[i],
     custom: true,
   };
-  state = { ...state, custom: [...state.custom, book] };
+}
+
+export function addCustomBook(input: NewBook) {
+  addBooksBatch([input]);
+}
+
+/** Ajoute plusieurs livres d'un coup (import). Retourne le nombre ajouté. */
+export function addBooksBatch(inputs: NewBook[]): number {
+  ensureLoaded();
+  let nextId = 100000 + state.custom.length;
+  const additions = inputs
+    .filter((b) => b.titleFr.trim())
+    .map((b) => buildCustom(b, ++nextId));
+  if (additions.length === 0) return 0;
+  state = { ...state, custom: [...state.custom, ...additions] };
   persist();
+  return additions.length;
 }
 
 export function removeCustomBook(id: number) {

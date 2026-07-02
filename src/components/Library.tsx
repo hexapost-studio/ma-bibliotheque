@@ -78,8 +78,8 @@ export default function Library() {
             ))}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 220, background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.14)", borderRadius: 10, padding: "9px 14px" }}>
-            <span style={{ color: "#b39d84" }}>⌕</span>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher un titre, un auteur…" style={{ border: "none", outline: "none", background: "transparent", fontSize: 15, color: "#f3ead9", width: "100%" }} />
+            <span style={{ color: "#b39d84" }} aria-hidden>⌕</span>
+            <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Rechercher un titre ou un auteur" placeholder="Rechercher un titre, un auteur…" style={{ border: "none", outline: "none", background: "transparent", fontSize: 15, color: "#f3ead9", width: "100%" }} />
           </div>
           <select value={domain} onChange={(e) => setDomain(e.target.value)} style={select}>
             <option value="all">Tous les domaines</option>

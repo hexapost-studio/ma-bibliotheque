@@ -7,6 +7,7 @@ const TABS = [
   { href: "/", label: "Bibliothèque" },
   { href: "/tendances", label: "Tendances" },
   { href: "/prix", label: "Suivi des prix" },
+  { href: "/importer", label: "Importer" },
 ];
 
 export default function Nav() {

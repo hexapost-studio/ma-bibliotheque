@@ -11,7 +11,6 @@ import Sparkline from "./Sparkline";
 export default function BookModal({ book, onClose }: { book: Book; onClose: () => void }) {
   const { data, loading } = useAvailability(book);
   const links = externalLinks(book.titleFr, book.titleEn, book.author);
-  const meta = STATUS_META[book.status];
   const lowest = Math.min(...(book.priceHistory.length ? book.priceHistory : [book.price]));
   const drop = book.priceHistory.length ? book.priceHistory[0] - book.price : 0;
 
@@ -38,6 +37,9 @@ export default function BookModal({ book, onClose }: { book: Book; onClose: () =
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={book.titleFr}
         style={{
           width: 600,
           maxWidth: "100%",
