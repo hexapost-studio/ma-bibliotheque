@@ -20,10 +20,12 @@ async function jget(url: string, ms = 8000): Promise<unknown | null> {
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), ms);
   try {
+    // NB : ne pas combiner `signal` (AbortController) avec l'option `next` de
+    // cache — cela fait échouer le fetch sur le runtime Vercel. La mise en cache
+    // est assurée par le `export const revalidate` au niveau de la route.
     const r = await fetch(url, {
       signal: ac.signal,
       headers: { "User-Agent": "ma-bibliotheque/1.0 (open-source book library)" },
-      next: { revalidate: 86400 },
     });
     if (!r.ok) return null;
     return await r.json();

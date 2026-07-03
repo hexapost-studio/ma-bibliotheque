@@ -13,10 +13,10 @@ async function jget(url: string, ms = 7000): Promise<unknown | null> {
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), ms);
   try {
+    // Voir note dans availability/route.ts : pas d'option `next` avec `signal`.
     const r = await fetch(url, {
       signal: ac.signal,
       headers: { "User-Agent": "ma-bibliotheque/1.0 (open-source book library)" },
-      next: { revalidate: 86400 },
     });
     return r.ok ? await r.json() : null;
   } catch {
