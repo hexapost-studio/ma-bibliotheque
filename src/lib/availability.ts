@@ -2,7 +2,7 @@
 
 import { useEffect, useReducer } from "react";
 import type { Book } from "@/data/books";
-import type { Availability } from "@/app/api/availability/route";
+import { getAvailability, type Availability } from "@/lib/sources";
 
 const cache = new Map<string, Availability>();
 const inFlight = new Set<string>();
@@ -12,13 +12,13 @@ function keyOf(book: Book): string {
 }
 
 function empty(): Availability {
-  return { publicDomain: false, formats: [], free: [], audio: [], updatedAt: new Date().toISOString() };
+  return { publicDomain: false, formats: [], free: [], audio: [] };
 }
 
 /**
- * Récupère la disponibilité gratuite d'un livre.
- * L'état dérive du cache module — pas de setState synchrone dans l'effet :
- * l'effet lance seulement le fetch et force un re-rendu à la résolution.
+ * Récupère la disponibilité gratuite d'un livre (Gutendex + Open Library depuis
+ * le navigateur, LibriVox via proxy). État dérivé du cache — pas de setState
+ * synchrone dans l'effet.
  */
 export function useAvailability(book: Book | null): { data: Availability | null; loading: boolean } {
   const [, force] = useReducer((x: number) => x + 1, 0);
@@ -27,27 +27,17 @@ export function useAvailability(book: Book | null): { data: Availability | null;
   useEffect(() => {
     if (!book || !key || cache.has(key) || inFlight.has(key)) return;
     inFlight.add(key);
-    const ac = new AbortController();
-    const params = new URLSearchParams({
-      title: book.titleEn || book.titleFr,
-      author: book.author,
-      isbn: book.isbn,
-      pd: book.publicDomain ? "1" : "0",
-    });
-    fetch(`/api/availability?${params}`, { signal: ac.signal })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: Availability | null) => {
-        // On mémorise toujours un résultat (réel ou vide) pour arrêter le chargement.
-        cache.set(key, d ?? empty());
-      })
-      .catch(() => {
-        if (!ac.signal.aborted) cache.set(key, empty());
-      })
+    let cancelled = false;
+    getAvailability(book)
+      .then((d) => cache.set(key, d))
+      .catch(() => cache.set(key, empty()))
       .finally(() => {
         inFlight.delete(key);
-        force();
+        if (!cancelled) force();
       });
-    return () => ac.abort();
+    return () => {
+      cancelled = true;
+    };
   }, [book, key]);
 
   const data = key && cache.has(key) ? cache.get(key)! : null;

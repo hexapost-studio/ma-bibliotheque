@@ -5,7 +5,7 @@ import Link from "next/link";
 import { parseWishlist, type ImportItem } from "@/lib/import";
 import { addBooksBatch, exportData, importData, type NewBook } from "@/lib/store";
 import { DOMAINS } from "@/data/books";
-import type { LookupResult } from "@/app/api/lookup/route";
+import { lookupBook } from "@/lib/sources";
 import { ACCENT } from "@/lib/meta";
 
 type Row = ImportItem & { domain: string };
@@ -26,13 +26,8 @@ export default function ImporterPage() {
     const enriched = await Promise.all(
       items.map(async (it) => {
         if (it.titleFr || !it.isbn) return it;
-        try {
-          const r = await fetch(`/api/lookup?isbn=${it.isbn}`);
-          const d: LookupResult = await r.json();
-          return { ...it, titleFr: d.titleFr || it.titleFr, author: d.author || it.author };
-        } catch {
-          return it;
-        }
+        const d = await lookupBook(it.isbn);
+        return d ? { ...it, titleFr: d.titleFr || it.titleFr, author: d.author || it.author } : it;
       })
     );
     setRows(enriched.map((it) => ({ ...it, domain: it.domain || defaultDomain })));
